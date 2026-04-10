@@ -20,7 +20,7 @@
  *   - Returns a new Promise
  *   - Valid ingredients: ["tea", "milk", "sugar", "ginger", "cardamom"]
  *   - If ingredient is in the list: resolve with { ingredient, available: true }
- *   - If not: reject with Error message "${ingredient} khatam ho gaya!"
+ *   - If not: reject with Error message ""
  *
  * Function: prepareChaiWithTimeout(type, timeoutMs)
  *   - Returns a Promise that uses Promise.race
@@ -73,17 +73,62 @@
  *   // ]
  */
 export function orderChai(type, quantity) {
-  // Your code here
+  const Prices = { cutting: 10, special: 20, ginger: 15, masala: 25 };
+
+  return new Promise((res, rej) => {
+    if (!Prices[type]) {
+      rej(new Error("Yeh chai available nahi hai!"));
+    }
+
+    if (typeof quantity !== "number" || quantity <= 0) {
+      rej(new Error("Kitni chai chahiye bhai?"));
+    }
+
+    setTimeout(() => {
+      res({ type, quantity, total: Prices[type] * quantity })
+    }, 100);
+  })
 }
 
 export function checkIngredients(ingredient) {
-  // Your code here
+  const ingredients = ["tea", "milk", "sugar", "ginger", "cardamom"];
+  return new Promise((res, rej) => {
+    if (ingredients.includes(ingredient)) {
+      res({ ingredient, available: true });
+    }
+    else {
+      rej(new Error(`${ingredient} khatam ho gaya!`));
+    }
+  })
 }
 
 export function prepareChaiWithTimeout(type, timeoutMs) {
-  // Your code here
+  const chaiPromise = orderChai(type, 1);
+
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => {
+      reject(new Error("Bahut der ho gayi, chai nahi bani!"));
+    }, timeoutMs);
+  });
+
+  return Promise.race([chaiPromise, timeoutPromise]);
 }
 
 export function processChaiQueue(orders) {
-  // Your code here
+  if (orders.length === 0)
+    return Promise.resolve([]);
+
+  const promises = orders.map(({ type, quantity }) => {
+    return orderChai(type, quantity)
+      .then((value) => ({
+        status: "fulfilled",
+        value
+      }))
+      .catch((error) => ({
+        status: "rejected",
+        reason: error.message
+      }));
+  });
+
+  return Promise.all(promises);
 }
